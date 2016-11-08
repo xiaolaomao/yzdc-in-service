@@ -186,7 +186,6 @@
                 <filtering>true</filtering>
                 <!-- 排除测试环境配置文件 -->
                 <excludes>
-                    <!--<exclude>testng-context.xml</exclude>-->
                     <exclude>dev/*</exclude>
                     <exclude>prod/*</exclude>
                     <exclude>test/*</exclude>
