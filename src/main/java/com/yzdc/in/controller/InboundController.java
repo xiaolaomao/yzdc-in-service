@@ -62,6 +62,7 @@ public class InboundController extends AbstractBaseController {
         PrintWriter pw = getJsonPrintWriter(response);
         if (errorMsg == null || errorMsg.equals("")) {
             response.setStatus(HttpStatus.OK.value());
+            pw.println("ok");
         } else {
             response.setStatus(HttpStatus.BAD_REQUEST.value());
             pw.println(errorMsg);
