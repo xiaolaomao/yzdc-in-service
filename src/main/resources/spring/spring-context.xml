@@ -13,4 +13,5 @@
     <context:component-scan base-package="com.yzdc.in.service"/>
     <!-- 读入配置文件 -->
     <import resource="classpath:spring/spring-mvc.xml"/>
+    <import resource="classpath:spring/spring-mybatis.xml"/>
 </beans>

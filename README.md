@@ -1,9 +1,14 @@
-## 数据中心数据上报接口（上报至kafka消息队列）
+## 数据中心数据上报服务
 
 ### 1:概述
 
-    对于数据库级别的数据,我们已经有了数据库订阅中心功能,可解析binlog日志上传至kafka集群,用于我们的实时分析;对于不能读取binlog日志的数据,我们采用
-    restful接口的形式进行数据上报;
+本项目的目的主要用于处理数据变更订阅中心无法处理的需求,提供以下上报接口:
+
+- 上报至kafka消息队列
+- 上报至redis内存数据库
+- 上报至mysql数据库
+- 等等
+
     
 ### 2:代码结构
 
@@ -44,6 +49,39 @@
   
   
 ### 3:调用方式
+
+上报接口采用统一数据格式（json）,采用http,POST方式进行上报,json数据格式如下
+```json
+{
+    "inType": mysql/kafka/redis,
+    "dataInfo": {
+        "total": 3,
+        "data": [
+            {
+                "report_date": "2016-08-10",
+                "today_taken_cnt": "164",
+                "today_used_cnt": "0",
+                "today_campaign_trade_amt": "0.00"
+            },
+            {
+                "report_date": "2016-08-11",
+                "today_taken_cnt": "207",
+                "today_used_cnt": "2",
+                "today_campaign_trade_amt": "315.10"
+            },
+            {
+                "report_date": "2016-08-12",
+                "today_taken_cnt": "267",
+                "today_used_cnt": "0",
+                "today_campaign_trade_amt": "0.00"
+            }
+        ],
+    },
+    "msg": "返回数据成功!"
+}
+```
+
+
 - 传输格式
     数据采用json字符串的形式进行上报;上报信息如以下形式:
     ```json
