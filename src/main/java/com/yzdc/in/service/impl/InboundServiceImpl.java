@@ -42,7 +42,7 @@ public class InboundServiceImpl implements InboundService, Serializable {
     @Transactional(rollbackFor = Exception.class)
     public String handleMallInbound(String inbound) throws Exception {
         String retMsg = "fail";
-        logger.info("----> InboundService.handleMallInbound!");
+        logger.debug("----> InboundService.handleMallInbound!");
         JSONObject jsonObject = JSONObject.fromObject(inbound);
         if (jsonObject != null && !jsonObject.isEmpty()) {
             String inType = jsonObject.get("inType").toString();
