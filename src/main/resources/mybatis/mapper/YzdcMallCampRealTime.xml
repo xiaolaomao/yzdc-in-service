@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yzdc.in.dao.YzdcMallCampRealTimeDAO">
+    <resultMap id="BaseResultMap" type="com.yzdc.in.model.YzdcMallCampRealTime">
+        <result column="report_date" property="report_date" jdbcType="INTEGER"/>
+        <result column="org_id" property="org_id" jdbcType="INTEGER"/>
+        <result column="org_name" property="org_name" jdbcType="VARCHAR"/>
+        <result column="active_number" property="active_number" jdbcType="INTEGER"/>
+        <result column="org_type" property="org_type" jdbcType="INTEGER"/>
+        <result column="data_type" property="data_type" jdbcType="INTEGER"/>
+        <result column="product_date" property="product_date" jdbcType="VARCHAR"/>
+    </resultMap>
+    <!-- 插入数据 -->
+    <insert id="insertCampRealTime" parameterType="com.yzdc.in.model.YzdcMallCampRealTime">
+        insert into galaxy_mall_real_time(report_date,org_id,org_name,active_number,org_type,data_type,product_date)
+        values(#{report_date},#{org_id},#{org_name},#{active_number},#{org_type},#{data_type},#{product_date})
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsertCampRealTime" parameterType="java.util.List">
+        insert into galaxy_mall_real_time(report_date,org_id,org_name,active_number,org_type,data_type,product_date)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.report_date},#{item.org_id},#{item.org_name},#{item.active_number},#{item.org_type},#{item.data_type},#{item.product_date})
+        </foreach>
+    </insert>
+    <!-- 更新数据 -->
+    <update id="updateCampRealTime" parameterType="com.yzdc.in.model.YzdcMallCampRealTime">
+        update galaxy_mall_real_time
+        set report_date=#{report_date},org_id=#{org_id},org_name=#{org_name},active_number=#{active_number},org_type=#{org_type},data_type=#{data_type},product_date=#{product_date}
+        where report_date=#{report_date}
+    </update>
+    <!-- 删除数据 -->
+    <delete id="deleteCampRealTimeByBizDate" parameterType="String">
+        delete from galaxy_mall_real_time where from_unixtime(report_date,'%Y-%m-%d') = #{report_date}
+    </delete>
+</mapper>

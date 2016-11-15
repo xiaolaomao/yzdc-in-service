@@ -1,4 +1,4 @@
-package com.yzdc.in.utils;
+package com.yzdc.in.channel;
 
 
 import kafka.producer.Partitioner;

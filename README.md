@@ -54,9 +54,7 @@
 ```json
 {
     "inType": mysql/kafka/redis,
-    "dataInfo": {
-        "total": 3,
-        "data": [
+    "dataInfo": [
             {
                 "report_date": "2016-08-10",
                 "today_taken_cnt": "164",
@@ -75,18 +73,12 @@
                 "today_used_cnt": "0",
                 "today_campaign_trade_amt": "0.00"
             }
-        ],
-    },
+    ],
     "msg": "返回数据成功!"
 }
 ```
 
 
-- 传输格式
-    数据采用json字符串的形式进行上报;上报信息如以下形式:
-    ```json
-    {"col1":"1","col2":"yzdc","col3":"yzdc","col4":"yzdc","col5":"yzdc","col6":"yzdc","col7":"yzdc","col8":"yzdc","col9":"yzdc","col10":"yzdc","col11":"yzdc","col12":"yzdc","col13":"yzdc","createdAtMs":1478586045285}
-    ```
 - 上报接口
     数据采用post方式进行上报:
     http://ip:port/yzdc-in-service/yzdc/inbound/mall

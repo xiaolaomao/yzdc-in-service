@@ -1,6 +1,8 @@
 package com.yzdc.in.controller;
 
-import com.yzdc.in.utils.Md5Encrypt;
+import com.yzdc.in.utils.Constants;
+import com.yzdc.in.utils.MD5Signature;
+import com.yzdc.in.utils.PropertyTools;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -10,6 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Desc:     上报接口抽象类
@@ -21,8 +25,9 @@ import java.util.Date;
 public class AbstractBaseController {
     private final Logger logger = LogManager.getLogger(AbstractBaseController.class);
 
-    //手机上报时间戳同系统当前时间的允许的时间差
-    private static long ValidTimeDuarationMsecons = 5 * 60 * 1000;
+    private static int timeOut = Integer.valueOf(PropertyTools.getPropertyBy("auth.interval"));//有效时间间隔
+    private static String secret = PropertyTools.getPropertyBy("auth.salt");//加密值
+
 
     /**
      * 通用返回错误信息方法
@@ -38,6 +43,7 @@ public class AbstractBaseController {
         PrintWriter pw = null;
         try {
             pw = response.getWriter();
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
             pw.println(errInfo);
             pw.flush();
         } catch (IOException e) {
@@ -54,75 +60,52 @@ public class AbstractBaseController {
      * @param request
      * @return
      */
-    protected boolean validInbound(String inbound, HttpServletRequest request) {
+    protected boolean validInbound(String inbound, HttpServletRequest request, HttpServletResponse response) {
         if (inbound == null || inbound.equals("")) {
             return false;
         }
-        //TODO 解析json信息校验上报数据的合法性
-        return false;
+        String inKey = request.getHeader("inKey");
+        String sign = request.getHeader("sign");
+        String timeStamp = request.getHeader("timeStamp");
+        boolean b = validVerfyHeader(inKey, inbound, timeStamp, sign, response);
+        return b;
     }
 
     /**
      * 校验上报时的AppVerify头
      *
-     * @param appId
-     * @param appKey
-     * @param varifyApp
+     * @param inbound
+     * @param timeStamp
+     * @param sign
      * @return
      */
-    private boolean validVerfyHeader(
-            String appId, String appKey, String varifyApp
-    ) {
-        if (varifyApp != null && !varifyApp.equals("")) {
-            String[] validateArray = varifyApp.split(";");
-            if (validateArray.length < 2) {
-                logger.error("validateArray length < 2");
+    private boolean validVerfyHeader(String inKey, String inbound, String timeStamp, String sign, HttpServletResponse response) {
+        try {
+            // 时间有效期验证
+            Long times = Long.parseLong(timeStamp);
+            Long currentTimes = System.currentTimeMillis();
+            Long interval = Math.abs(currentTimes - times);
+            if (interval >= timeOut) {
+                logger.error("------> 连接认证失败,当前时间戳已经过期!");
+                this.returnError(response, "连接认证失败,当前时间戳已经过期!");
                 return false;
             }
-            String md5Code = validateArray[0].replaceFirst("md5=", "");
-            String ts = validateArray[1].replaceFirst("ts=", "");
-            //验证时间戳
-            if (!validateTimestamp(ts)) {
-                logger.error("timestamp invalide");
+            // 拼装加密值
+            Map<String, String> secretMap = new HashMap<String, String>();
+            secretMap.put("data", inbound);
+            secretMap.put("inKey", inKey);
+            String dataSign = MD5Signature.signTopRequest(secretMap, secret, Constants.SIGN_METHOD_MD5);
+            if (!dataSign.equals(sign)) {
+                logger.error("------> 连接认证失败,当前时间戳已经过期!");
+                this.returnError(response, "连接认证失败,校验值不合法!");
                 return false;
             }
-            String localMd5 = Md5Encrypt.md5(appId + ":" + appKey + ":" + ts);
-            if (!localMd5.equals(md5Code)) {
-                logger.info("request md5 is :" + md5Code + " and localMd5 is:" + localMd5 + " from MD5(" + appId + ":" + appKey + ":" + ts + ")");
-                return false;
-            }
-        } else {
+        } catch (IOException ex) {
+            logger.error("------> Auth Fail:" + ex);
+            this.returnError(response, "连接认证失败," + ex);
             return false;
         }
         return true;
-    }
-
-    /**
-     * 校验时间戳
-     *
-     * @param ts
-     * @return
-     */
-    private boolean validateTimestamp(String ts) {
-        if (ts == null || ts.equals("")) {
-            return false;
-        }
-        if (ts.length() < 13) {
-            ts = ts + "000";
-        }
-        Date d = new Date();
-        Date dbefor = new Date(d.getTime() - ValidTimeDuarationMsecons);// 前十分中时间
-        Date dafter = new Date(d.getTime() + ValidTimeDuarationMsecons);// 后十分钟时间
-        logger.debug("dbefore timestmp:" + dbefor.getTime()
-                + " and dafter timestamp:" + dafter.getTime());
-        Long requestTimestmp = Long.parseLong(ts);
-        if (requestTimestmp > dbefor.getTime()
-                && requestTimestmp < dafter.getTime()) {
-            return true;
-        } else {
-            logger.debug("requestTimestmp =" + requestTimestmp);
-            return false;
-        }
     }
 
     /**

@@ -1,9 +1,12 @@
 package com.yzdc.in.utils;
 
 import com.alibaba.dubbo.common.json.JSON;
-import com.alibaba.dubbo.common.json.JSONObject;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Desc: Json解析工具类
@@ -20,10 +23,9 @@ public class JsonUtils {
      *
      * @param status
      * @param msg
-     * @param <T>
      * @return
      */
-    public static <T> String responseRetMsg(int status, String msg) {
+    public static String responseRetMsg(int status, String msg) {
         result = new JSONObject();
         try {
             result.put("msg", msg);//提示信息
@@ -33,5 +35,22 @@ public class JsonUtils {
             e.printStackTrace();
         }
         return jsonArrayData;
+    }
+
+    /**
+     * 将json字符串转换为java对象列表数据
+     *
+     * @param jsonString
+     * @param clazz
+     * @return
+     */
+    public static List getDTOList(String jsonString, Class clazz) {
+        JSONArray array = JSONArray.fromObject(jsonString);
+        List<Object> obj = new ArrayList<Object>(array.size());
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject jsonObject = array.getJSONObject(i);
+            obj.add(JSONObject.toBean(jsonObject, clazz));
+        }
+        return obj;
     }
 }

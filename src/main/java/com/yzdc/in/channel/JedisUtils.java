@@ -1,6 +1,7 @@
-package com.yzdc.in.utils;
+package com.yzdc.in.channel;
 
 
+import com.yzdc.in.utils.PropertyTools;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.commons.lang.StringUtils;
@@ -18,12 +19,9 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class JedisUtils {
     private final static Logger logger = LogManager.getLogger(JedisUtils.class);
-    protected static ReentrantLock lockPool = new ReentrantLock();
-    protected static ReentrantLock lockJedis = new ReentrantLock();
     // 获取redis参数
     private static String ADDR_ARRAY = PropertyTools.getPropertyBy("redis.ip");//Redis服务器IP
     private static int PORT = Integer.valueOf(PropertyTools.getPropertyBy("redis.port"));//Redis的端口号
-    private static String AUTH = PropertyTools.getPropertyBy("redis.auth");//访问密码
 
     // 如果赋值为-1，则表示不限制；如果pool已经分配了maxActive个jedis实例，则此时pool的状态为exhausted(耗尽)。
     private static int MAX_ACTIVE = Integer.valueOf(PropertyTools.getPropertyBy("jedis.pool.maxActive"));//可用连接实例的最大数目，默认值为8；
@@ -53,7 +51,7 @@ public class JedisUtils {
             config.setMaxIdle(MAX_IDLE);
             config.setMaxWaitMillis(MAX_WAIT);
             config.setTestOnBorrow(TEST_ON_BORROW);
-            jedisPool = new JedisPool(config, ADDR_ARRAY.split(",")[0], PORT, TIMEOUT, AUTH);
+            jedisPool = new JedisPool(config, ADDR_ARRAY.split(",")[0], PORT, TIMEOUT);
         } catch (Exception e) {
             logger.error("First create JedisPool error : " + e);
             try {
@@ -63,7 +61,7 @@ public class JedisUtils {
                 config.setMaxIdle(MAX_IDLE);
                 config.setMaxWaitMillis(MAX_WAIT);
                 config.setTestOnBorrow(TEST_ON_BORROW);
-                jedisPool = new JedisPool(config, ADDR_ARRAY.split(",")[1], PORT, TIMEOUT, AUTH);
+                jedisPool = new JedisPool(config, ADDR_ARRAY.split(",")[1], PORT, TIMEOUT);
             } catch (Exception e2) {
                 logger.error("Second create JedisPool error : " + e2);
             }
@@ -108,7 +106,7 @@ public class JedisUtils {
      */
     public static void returnResource(final Jedis jedis) {
         if (jedis != null && jedisPool != null) {
-            jedisPool.close();
+            jedisPool.returnResource(jedis);
         }
     }
 
@@ -155,4 +153,5 @@ public class JedisUtils {
         }
         return getJedis().get(key);
     }
+
 }

@@ -1,5 +1,6 @@
-package com.yzdc.in.utils;
+package com.yzdc.in.channel;
 
+import com.yzdc.in.utils.PropertyTools;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
