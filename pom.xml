@@ -131,6 +131,13 @@
             <version>${testng.version}</version>
             <scope>test</scope>
         </dependency>
+        <!--spring单元测试依赖 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+            <scope>test</scope>
+        </dependency>
         <!-- log4j 设置 -->
         <dependency>
             <groupId>log4j</groupId>

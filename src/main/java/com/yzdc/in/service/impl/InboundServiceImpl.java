@@ -7,7 +7,6 @@ import com.yzdc.in.model.YzdcMallCampRealTime;
 import com.yzdc.in.service.InboundService;
 import com.yzdc.in.utils.DateUtils;
 import com.yzdc.in.utils.JsonUtils;
-import com.yzdc.in.utils.PropertyTools;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,26 +40,29 @@ public class InboundServiceImpl implements InboundService, Serializable {
      */
     @Transactional(rollbackFor = Exception.class)
     public String handleMallInbound(String inbound) throws Exception {
-        String retMsg = "fail";
+        boolean retFlag = false;
         logger.debug("----> InboundService.handleMallInbound!");
         JSONObject jsonObject = JSONObject.fromObject(inbound);
         if (jsonObject != null && !jsonObject.isEmpty()) {
             String inType = jsonObject.get("inType").toString();
             if ("mysql".equalsIgnoreCase(inType)) {
                 // 写入mysql数据库
-                doCampRealTime(jsonObject.get("dataInfo").toString());
-                retMsg = "success";
+                retFlag = handleMysql(jsonObject.get("dataInfo").toString());
             } else if ("redis".equalsIgnoreCase(inType)) {
                 // 写入redis
-                JedisUtils.setString("", "");
-                retMsg = "success";
+                retFlag = handleRedis(jsonObject.get("dataInfo").toString());
             } else if ("kafka".equalsIgnoreCase(inType)) {
                 // 写入kafka
-                KafkaUtils.sendKafkaMsg(PropertyTools.getPropertyBy("kafka.mall.topic"), jsonObject.get("dataInfo").toString());
-                retMsg = "success";
+                String topic = jsonObject.get("topic").toString();
+                String producerType = jsonObject.get("producerType").toString();
+                retFlag = handleKafka(topic, jsonObject.get("dataInfo").toString(), producerType);
             }
         }
-        return retMsg;
+        if (retFlag) {
+            return "success";
+        } else {
+            return "fail";
+        }
     }
 
 
@@ -70,7 +72,7 @@ public class InboundServiceImpl implements InboundService, Serializable {
      * @param jsonStr
      * @return
      */
-    private boolean doCampRealTime(String jsonStr) throws Exception {
+    private boolean handleMysql(String jsonStr) throws Exception {
         Boolean retFlag = false;
         List<YzdcMallCampRealTime> insList = JsonUtils.getDTOList(jsonStr, YzdcMallCampRealTime.class);
         if (insList != null && insList.size() > 0) {
@@ -83,6 +85,48 @@ public class InboundServiceImpl implements InboundService, Serializable {
                 JedisUtils.setString("mallCampRealTime", JedisUtils.EXRP_HOUR, String.valueOf(System.currentTimeMillis()));
                 retFlag = true;
             }
+        }
+        return retFlag;
+    }
+
+
+    /**
+     * 上报数据至kafka
+     *
+     * @param topic
+     * @param jsonStr
+     * @param producerType
+     * @return
+     */
+    private boolean handleKafka(String topic, String jsonStr, String producerType) {
+        Boolean retFlag = true;
+        try {
+            KafkaUtils.sendKafkaMsg(topic, jsonStr, producerType);
+        } catch (Exception ex) {
+            logger.error("----->上报数据至kafka失败!原因:" + ex.getMessage());
+            retFlag = false;
+        }
+        return retFlag;
+    }
+
+
+    /**
+     * 上报至redis
+     *
+     * @param jsonStr
+     * @return
+     */
+    private boolean handleRedis(String jsonStr) {
+        Boolean retFlag = true;
+        JSONObject jsonObject = JSONObject.fromObject(jsonStr);
+        String key = jsonObject.get("key").toString();
+        String value = jsonObject.get("value").toString();
+        try {
+            //TODO 目前只支持写入key,value值,后续可根据需要处理更负载的逻辑
+            JedisUtils.setString(key, value);
+        } catch (Exception ex) {
+            logger.error("----->上报数据至redis失败!原因:" + ex.getMessage());
+            retFlag = false;
         }
         return retFlag;
     }
